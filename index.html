@@ -1,0 +1,2190 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>會考倒數計時</title>
+  <meta property="og:title" content="會考倒數計時" />
+  <meta property="og:description" content="116、117年國中教育會考即時倒數計時" />
+  <meta property="og:image" content="https://www.taiwanexam.dpdns.org/og-image.png" />
+  <meta property="og:url" content="https://www.taiwanexam.dpdns.org/" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect x='4' y='6' width='20' height='24' rx='3' fill='%23e8284a' opacity='0.2'/><rect x='4' y='6' width='20' height='24' rx='3' fill='none' stroke='%23e8284a' stroke-width='1.5'/><rect x='4' y='6' width='4' height='24' rx='2' fill='%23e8284a' opacity='0.8'/><line x1='12' y1='13' x2='21' y2='13' stroke='%23f5c842' stroke-width='1.5' stroke-linecap='round'/><line x1='12' y1='17' x2='21' y2='17' stroke='%23f5c842' stroke-width='1.5' stroke-linecap='round' opacity='0.7'/><line x1='12' y1='21' x2='18' y2='21' stroke='%23f5c842' stroke-width='1.5' stroke-linecap='round' opacity='0.4'/><g transform='translate(20,18) rotate(-38)'><rect x='-2' y='-8' width='4' height='13' rx='1' fill='%23f5c842'/><polygon points='-2,5 2,5 0,9' fill='%23e8284a'/></g></svg>"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+    :root {
+      --red:#e8284a; --gold:#f5c842;
+      --bg:#0d0d10; --card-bg:#1e1e26;
+      --text:#ffffff; --sub:rgba(255,255,255,.45);
+      --border:rgba(245,200,66,0.18); --card-border:rgba(245,200,66,0.15);
+      --sched-rest-bg:rgba(255,255,255,0.04); --sched-rest-txt:rgba(255,255,255,.35);
+      --sched-exam-bg:rgba(245,200,66,0.1); --sched-exam-txt:#f5c842;
+      --sched-hd-bg:rgba(232,40,74,0.18); --sched-hd-txt:#e8284a;
+      --track-bg:rgba(255,255,255,0.1);
+    }
+
+    [data-theme="light"] {
+      --bg:#f0f2f7; --card-bg:#ffffff;
+      --text:#1a1a2e; --sub:#6b7280;
+      --border:rgba(100,100,120,0.2); --card-border:rgba(100,100,120,0.15);
+      --sched-rest-bg:#f8f9fc; --sched-rest-txt:#9ca3af;
+      --sched-exam-bg:#fef9e7; --sched-exam-txt:#92650a;
+      --sched-hd-bg:#fde8ec; --sched-hd-txt:#c0203a;
+      --track-bg:rgba(0,0,0,0.08);
+    }
+
+    html, body {
+      min-height:100%;
+      background:var(--bg);
+      color:var(--text);
+      font-family:'Noto Serif TC',serif;
+      overflow-x:hidden;
+      transition:background .4s, color .4s;
+    }
+
+    .bg-mesh {
+      position:fixed; inset:0; z-index:0;
+      background:
+        radial-gradient(ellipse 60% 50% at 15% 20%, rgba(232,40,74,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 60% at 85% 80%, rgba(245,200,66,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 80% 40% at 50% 50%, rgba(20,20,30,0.95) 0%, #0d0d10 100%);
+      transition: background .4s;
+    }
+
+    [data-theme="light"] .bg-mesh {
+      background:
+        radial-gradient(ellipse 60% 50% at 15% 20%, rgba(232,40,74,0.05) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 60% at 85% 80%, rgba(245,200,66,0.04) 0%, transparent 70%),
+        #f0f2f7;
+    }
+
+    .wrapper {
+      position:relative;
+      z-index:1;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:2rem 1rem 6rem;
+      gap:1.8rem;
+    }
+
+    .logo {
+      display:flex;
+      align-items:center;
+      gap:.55rem;
+      text-decoration:none;
+      user-select:none;
+    }
+
+    .logo-icon {
+      width:36px;
+      height:36px;
+      flex-shrink:0;
+    }
+
+    .logo-text {
+      display:flex;
+      flex-direction:column;
+      line-height:1.1;
+    }
+
+    .logo-main {
+      font-size:.95rem;
+      font-weight:900;
+      letter-spacing:.08em;
+      color:var(--text);
+    }
+
+    .logo-sub {
+      font-size:.6rem;
+      letter-spacing:.22em;
+      color:var(--gold);
+      font-family:'DM Mono',monospace;
+      font-weight:400;
+    }
+
+    [data-theme="light"] .logo-sub { color:#a07a00; }
+
+    /* === 漢堡選單 === */
+    .hamburger {
+      width:38px;
+      height:38px;
+      border-radius:50%;
+      border:1px solid var(--border);
+      background:var(--card-bg);
+      color:var(--text);
+      cursor:pointer;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:5px;
+      transition:all .3s;
+      box-shadow:0 2px 8px rgba(0,0,0,.1);
+      flex-shrink:0;
+    }
+
+    .hamburger:hover { border-color:var(--red); }
+
+    .hamburger span {
+      display:block;
+      width:16px;
+      height:2px;
+      background:var(--text);
+      border-radius:2px;
+      transition:all .3s;
+    }
+
+    .sidebar-overlay {
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.5);
+      z-index:900;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .3s;
+    }
+
+    .sidebar-overlay.show {
+      opacity:1;
+      pointer-events:all;
+    }
+
+    .sidebar {
+      position:fixed;
+      top:0;
+      left:0;
+      width:280px;
+      height:100%;
+      background:var(--card-bg);
+      border-right:1px solid var(--card-border);
+      z-index:1000;
+      transform:translateX(-100%);
+      transition:transform .35s cubic-bezier(.4,0,.2,1);
+      display:flex;
+      flex-direction:column;
+      padding:0;
+      box-shadow:4px 0 24px rgba(0,0,0,.3);
+    }
+
+    .sidebar.open { transform:translateX(0); }
+
+    .sidebar-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:1.2rem 1.4rem;
+      border-bottom:1px solid var(--border);
+    }
+
+    .sidebar-logo {
+      font-size:.85rem;
+      font-weight:900;
+      letter-spacing:.08em;
+      color:var(--text);
+    }
+
+    .sidebar-close {
+      width:32px;
+      height:32px;
+      border-radius:50%;
+      border:1px solid var(--border);
+      background:transparent;
+      color:var(--text);
+      cursor:pointer;
+      font-size:1rem;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition:all .2s;
+    }
+
+    .sidebar-close:hover { background:rgba(232,40,74,0.1); border-color:var(--red); }
+
+    .sidebar-section {
+      padding:1rem 1.4rem .4rem;
+    }
+
+    .sidebar-section-title {
+      font-size:.62rem;
+      letter-spacing:.25em;
+      color:var(--sub);
+      margin-bottom:.6rem;
+    }
+
+    .sidebar-item {
+      display:flex;
+      align-items:center;
+      gap:.8rem;
+      padding:.75rem 1rem;
+      border-radius:10px;
+      cursor:pointer;
+      transition:all .2s;
+      border:1px solid transparent;
+      margin-bottom:.3rem;
+      background:transparent;
+      width:100%;
+      text-align:left;
+      color:var(--text);
+      font-family:'Noto Serif TC',serif;
+      font-size:.88rem;
+      letter-spacing:.08em;
+    }
+
+    .sidebar-item:hover {
+      background:rgba(232,40,74,0.06);
+      border-color:rgba(232,40,74,0.15);
+    }
+
+    .sidebar-item.active {
+      background:rgba(232,40,74,0.1);
+      border-color:rgba(232,40,74,0.3);
+      color:var(--red);
+    }
+
+    .sidebar-item-icon { font-size:1.1rem; }
+
+    .sidebar-item-info { display:flex; flex-direction:column; gap:.1rem; }
+
+    .sidebar-item-label { font-weight:700; }
+
+    .sidebar-item-sub {
+      font-size:.65rem;
+      color:var(--sub);
+      letter-spacing:.05em;
+      font-family:'DM Mono',monospace;
+    }
+
+    .sidebar-divider {
+      height:1px;
+      background:var(--border);
+      margin:.6rem 1.4rem;
+    }
+
+    .topbar {
+      display:flex;
+      align-items:center;
+      gap:.8rem;
+      flex-wrap:wrap;
+      justify-content:center;
+      animation:fadeDown .8s ease both;
+    }
+
+    .selector {
+      display:flex;
+      gap:.4rem;
+      background:rgba(128,128,128,0.08);
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:.3rem;
+    }
+
+    .sel-btn {
+      padding:.45rem 1.4rem;
+      border-radius:999px;
+      border:none;
+      background:transparent;
+      color:var(--sub);
+      font-family:'Noto Serif TC',serif;
+      font-size:.85rem;
+      letter-spacing:.12em;
+      cursor:pointer;
+      transition:all .3s;
+    }
+
+    .sel-btn.active {
+      background:var(--red);
+      color:#fff;
+      box-shadow:0 0 18px rgba(232,40,74,0.4);
+    }
+
+    .theme-btn {
+      width:38px;
+      height:38px;
+      border-radius:50%;
+      border:1px solid var(--border);
+      background:var(--card-bg);
+      color:var(--text);
+      font-size:1rem;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition:all .3s;
+      box-shadow:0 2px 8px rgba(0,0,0,.1);
+    }
+
+    .theme-btn:hover { border-color:var(--gold); }
+
+    .badge {
+      display:inline-flex;
+      align-items:center;
+      gap:.6rem;
+      padding:.4rem 1.2rem;
+      border:1px solid var(--border);
+      border-radius:999px;
+      font-size:.75rem;
+      letter-spacing:.2em;
+      color:var(--gold);
+      background:rgba(245,200,66,0.06);
+      animation:fadeDown .8s .1s ease both;
+    }
+
+    [data-theme="light"] .badge {
+      color:#a07a00;
+      background:rgba(245,200,66,0.1);
+    }
+
+    .badge-dot {
+      width:7px;
+      height:7px;
+      border-radius:50%;
+      background:var(--red);
+      box-shadow:0 0 8px var(--red);
+      animation:pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%,100%{opacity:1;transform:scale(1)}
+      50%{opacity:.5;transform:scale(.7)}
+    }
+
+    .quote {
+      font-size:clamp(.8rem,2vw,.95rem);
+      color:var(--sub);
+      text-align:center;
+      max-width:500px;
+      font-style:italic;
+      line-height:1.7;
+      animation:fadeDown .8s .2s ease both;
+    }
+
+    .hero {
+      text-align:center;
+      animation:fadeDown .9s .15s ease both;
+    }
+
+    .hero-year {
+      font-size:clamp(4rem,18vw,11rem);
+      font-weight:900;
+      line-height:.9;
+      letter-spacing:-.03em;
+      background:linear-gradient(135deg, #ffffff 30%, #f5c842 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+
+    [data-theme="light"] .hero-year {
+      background:linear-gradient(135deg, #1a1a2e 30%, #a07a00 100%);
+      -webkit-background-clip:text;
+      background-clip:text;
+    }
+
+    .hero-title {
+      font-size:clamp(1.1rem,4vw,2rem);
+      font-weight:700;
+      letter-spacing:.15em;
+      color:var(--text);
+      margin-top:.4rem;
+      opacity:.85;
+    }
+
+    .hero-sub {
+      font-size:clamp(.7rem,2vw,.9rem);
+      letter-spacing:.22em;
+      color:var(--sub);
+      margin-top:.5rem;
+    }
+
+    .progress-wrap {
+      width:100%;
+      max-width:780px;
+      animation:fadeUp .9s .25s ease both;
+    }
+
+    .progress-top {
+      display:flex;
+      justify-content:space-between;
+      font-size:.72rem;
+      letter-spacing:.12em;
+      color:var(--sub);
+      margin-bottom:.5rem;
+    }
+
+    .progress-track {
+      width:100%;
+      height:6px;
+      background:var(--track-bg);
+      border-radius:999px;
+      overflow:hidden;
+    }
+
+    .progress-fill {
+      height:100%;
+      border-radius:999px;
+      background:linear-gradient(90deg, var(--red), var(--gold));
+      transition:width .8s ease;
+    }
+
+    .countdown {
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:1rem;
+      width:100%;
+      max-width:780px;
+      animation:fadeUp .9s .3s ease both;
+    }
+
+    .unit {
+      position:relative;
+      background:var(--card-bg);
+      border:1px solid var(--card-border);
+      border-radius:16px;
+      padding:1.8rem 1rem 1.4rem;
+      text-align:center;
+      overflow:hidden;
+      transition:all .3s;
+      box-shadow:0 2px 12px rgba(0,0,0,.06);
+    }
+
+    .unit::before {
+      content:'';
+      position:absolute;
+      top:0;
+      left:0;
+      right:0;
+      height:2px;
+      background:linear-gradient(90deg,transparent,var(--red),transparent);
+      opacity:0;
+      transition:opacity .3s;
+    }
+
+    .unit:hover {
+      border-color:rgba(232,40,74,0.4);
+      box-shadow:0 0 28px rgba(232,40,74,0.1);
+    }
+
+    .unit:hover::before { opacity:1; }
+
+    .unit-num {
+      font-family:'DM Mono',monospace;
+      font-size:clamp(2.2rem,8vw,4.5rem);
+      font-weight:500;
+      line-height:1;
+      color:var(--text);
+      transition:color .4s;
+    }
+
+    .unit-num.pop { animation:pop .25s ease; }
+    .unit-num.urgent { color:var(--red) !important; }
+
+    @keyframes pop {
+      0%{transform:scale(1)}
+      40%{transform:scale(1.1)}
+      100%{transform:scale(1)}
+    }
+
+    .unit-label {
+      margin-top:.6rem;
+      font-size:.7rem;
+      letter-spacing:.25em;
+      color:var(--sub);
+    }
+
+    .date-bar {
+      display:flex;
+      align-items:center;
+      gap:1rem;
+      padding:.85rem 1.8rem;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:rgba(245,200,66,0.04);
+      animation:fadeUp .9s .4s ease both;
+    }
+
+    [data-theme="light"] .date-bar { background:rgba(245,200,66,0.08); }
+
+    .date-icon { font-size:1.3rem; }
+
+    .date-text {
+      font-size:.88rem;
+      letter-spacing:.08em;
+      color:var(--sub);
+    }
+
+    .date-text strong {
+      color:#a07a00;
+      font-weight:700;
+    }
+
+    [data-theme="dark"] .date-text strong { color:var(--gold); }
+
+    .schedule-wrap {
+      width:100%;
+      max-width:780px;
+      animation:fadeUp .9s .45s ease both;
+    }
+
+    .schedule-title {
+      font-size:.75rem;
+      letter-spacing:.25em;
+      color:var(--sub);
+      text-align:center;
+      margin-bottom:.8rem;
+    }
+
+    .schedule-tabs {
+      display:flex;
+      gap:.5rem;
+      justify-content:center;
+      margin-bottom:1rem;
+      flex-wrap:wrap;
+    }
+
+    .tab-btn {
+      padding:.4rem 1.3rem;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:transparent;
+      color:var(--sub);
+      font-family:'Noto Serif TC',serif;
+      font-size:.82rem;
+      letter-spacing:.1em;
+      cursor:pointer;
+      transition:all .3s;
+    }
+
+    .tab-btn.active {
+      background:var(--red);
+      color:#fff;
+      border-color:var(--red);
+      box-shadow:0 0 16px rgba(232,40,74,0.3);
+    }
+
+    .schedule-grid { display:none; }
+    .schedule-grid.show { display:block; }
+
+    .stbl {
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0 .35rem;
+    }
+
+    .stbl thead th {
+      font-size:.72rem;
+      letter-spacing:.18em;
+      color:var(--sched-hd-txt);
+      background:var(--sched-hd-bg);
+      padding:.55rem 1rem;
+      font-weight:700;
+    }
+
+    .stbl thead th:first-child { border-radius:10px 0 0 10px; }
+    .stbl thead th:last-child  { border-radius:0 10px 10px 0; }
+
+    .stbl tbody tr.rest td {
+      background:var(--sched-rest-bg);
+      color:var(--sched-rest-txt);
+    }
+
+    .stbl tbody tr.exam td { background:var(--sched-exam-bg); }
+
+    .stbl tbody tr.exam .subj-cell {
+      color:var(--sched-exam-txt);
+      font-weight:700;
+    }
+
+    .stbl tbody td {
+      padding:.6rem 1rem;
+      font-size:.8rem;
+      vertical-align:middle;
+      transition:background .4s, color .4s;
+    }
+
+    .stbl tbody td:first-child {
+      border-radius:10px 0 0 10px;
+      font-family:'DM Mono',monospace;
+      font-size:.72rem;
+      white-space:nowrap;
+    }
+
+    .stbl tbody td:last-child {
+      border-radius:0 10px 10px 0;
+    }
+
+    .dur {
+      font-size:.65rem;
+      color:var(--sub);
+      margin-top:.1rem;
+    }
+
+    .notice-wrap {
+      padding:.2rem 0 0;
+    }
+
+    .notice-title {
+      font-size:.75rem;
+      letter-spacing:.25em;
+      color:var(--sub);
+      text-align:center;
+      margin-bottom:1rem;
+    }
+
+    .notice-grid {
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:1rem;
+    }
+
+    .notice-card {
+      display:flex;
+      align-items:flex-start;
+      gap:.9rem;
+      padding:1rem 1.1rem;
+      background:var(--card-bg);
+      border:1px solid var(--card-border);
+      border-radius:16px;
+      transition:all .3s;
+      box-shadow:0 2px 12px rgba(0,0,0,.05);
+    }
+
+    .notice-card:hover {
+      transform:translateY(-2px);
+      border-color:rgba(245,200,66,0.35);
+      box-shadow:0 0 22px rgba(245,200,66,0.08);
+    }
+
+    .notice-icon {
+      font-size:1.6rem;
+      flex-shrink:0;
+      line-height:1;
+      margin-top:.1rem;
+    }
+
+    .notice-text {
+      display:flex;
+      flex-direction:column;
+      gap:.2rem;
+    }
+
+    .notice-text strong {
+      font-size:.92rem;
+      color:var(--text);
+    }
+
+    .notice-text span {
+      font-size:.72rem;
+      color:var(--sub);
+      line-height:1.5;
+    }
+
+    .subject-timer-wrap {
+      width:100%;
+      max-width:780px;
+      animation:fadeUp .9s .6s ease both;
+    }
+
+    .subject-timer-title {
+      font-size:.75rem;
+      letter-spacing:.25em;
+      color:var(--sub);
+      text-align:center;
+      margin-bottom:1rem;
+    }
+
+    .subject-timer-card {
+      background:var(--card-bg);
+      border:1px solid var(--card-border);
+      border-radius:18px;
+      padding:1.2rem;
+      box-shadow:0 2px 12px rgba(0,0,0,.06);
+    }
+
+    .timer-row {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:1rem;
+      margin-bottom:1rem;
+    }
+
+    .timer-row label {
+      font-size:.85rem;
+      color:var(--sub);
+      letter-spacing:.08em;
+      white-space:nowrap;
+    }
+
+    .timer-row select {
+      flex:1;
+      min-width:0;
+      padding:.65rem .8rem;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.03);
+      color:var(--text);
+      font-family:'Noto Serif TC',serif;
+      outline:none;
+    }
+
+    .timer-row select option {
+      color:#000;
+    }
+
+    .timer-display {
+      font-family:'DM Mono',monospace;
+      font-size:clamp(2.2rem,8vw,4rem);
+      text-align:center;
+      letter-spacing:.08em;
+      margin:.8rem 0 .3rem;
+      color:var(--gold);
+    }
+
+    .timer-subtext {
+      text-align:center;
+      font-size:.8rem;
+      color:var(--sub);
+      margin-bottom:1rem;
+      letter-spacing:.08em;
+    }
+
+    .timer-buttons {
+      display:flex;
+      gap:.75rem;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+
+    .timer-btn {
+      padding:.55rem 1.2rem;
+      border:none;
+      border-radius:999px;
+      cursor:pointer;
+      font-family:'Noto Serif TC',serif;
+      font-size:.85rem;
+      letter-spacing:.1em;
+      transition:all .25s;
+    }
+
+    .timer-btn.start {
+      background:var(--red);
+      color:#fff;
+    }
+
+    .timer-btn.pause {
+      background:rgba(245,200,66,0.16);
+      color:var(--text);
+      border:1px solid var(--border);
+    }
+
+    .timer-btn.stop {
+      background:rgba(255,255,255,0.08);
+      color:var(--text);
+      border:1px solid var(--border);
+    }
+
+    .timer-btn:hover {
+      transform:translateY(-1px);
+      box-shadow:0 0 16px rgba(0,0,0,.08);
+    }
+
+    .motto {
+      font-size:clamp(.75rem,2vw,.9rem);
+      letter-spacing:.18em;
+      color:var(--sub);
+      opacity:.7;
+      animation:fadeUp .9s .55s ease both;
+    }
+
+    .motto span {
+      color:var(--red);
+      opacity:.9;
+    }
+
+    .finished {
+      font-size:clamp(1.5rem,5vw,3rem);
+      font-weight:900;
+      letter-spacing:.08em;
+      color:var(--gold);
+      text-align:center;
+      display:none;
+    }
+
+    .music-btn {
+      position:fixed;
+      bottom:1.5rem;
+      right:1.5rem;
+      z-index:100;
+      width:52px;
+      height:52px;
+      border-radius:50%;
+      border:1px solid var(--border);
+      background:var(--card-bg);
+      color:var(--text);
+      font-size:1.4rem;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 4px 20px rgba(0,0,0,.15);
+      transition:all .3s;
+    }
+
+    .music-btn:hover { border-color:var(--gold); }
+
+    .music-btn.playing {
+      border-color:var(--gold);
+      background:rgba(245,200,66,0.1);
+    }
+
+    .music-btn.playing .music-icon {
+      animation:spin 4s linear infinite;
+    }
+
+    @keyframes spin {
+      from{transform:rotate(0deg)}
+      to{transform:rotate(360deg)}
+    }
+
+    .vol-wrap {
+      position:fixed;
+      bottom:5rem;
+      right:1.5rem;
+      z-index:100;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:.4rem;
+      background:var(--card-bg);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:.8rem .6rem;
+      opacity:0;
+      pointer-events:none;
+      transform:translateY(8px);
+      transition:all .3s;
+      box-shadow:0 4px 20px rgba(0,0,0,.12);
+    }
+
+    .vol-wrap.show {
+      opacity:1;
+      pointer-events:all;
+      transform:translateY(0);
+    }
+
+    .vol-label {
+      font-size:.6rem;
+      letter-spacing:.15em;
+      color:var(--sub);
+    }
+
+    input[type=range] {
+      writing-mode:vertical-lr;
+      direction:rtl;
+      width:6px;
+      height:80px;
+      appearance:none;
+      background:var(--track-bg);
+      border-radius:999px;
+      outline:none;
+      cursor:pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      appearance:none;
+      width:14px;
+      height:14px;
+      border-radius:50%;
+      background:var(--gold);
+    }
+
+    @keyframes fadeDown {
+      from{opacity:0;transform:translateY(-20px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    @keyframes fadeUp {
+      from{opacity:0;transform:translateY(20px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    @media (max-width:640px){
+      .notice-grid{grid-template-columns:1fr;}
+      .timer-row{flex-direction:column;align-items:stretch;}
+    }
+
+    @media (max-width:520px) {
+      .countdown{grid-template-columns:repeat(2,1fr);max-width:340px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-mesh"></div>
+
+  <audio id="bgm" loop src="the_weight_of_paper.mp3"></audio>
+  <audio id="finishSfx" src="ascent_of_light.mp3"></audio>
+
+  <button class="music-btn" id="musicBtn" onclick="toggleMusic()">
+    <span class="music-icon">🎵</span>
+  </button>
+
+  <div class="vol-wrap" id="volWrap">
+    <div class="vol-label">音量</div>
+    <input type="range" id="volSlider" min="0" max="100" value="50" oninput="setVol(this.value)" />
+  </div>
+
+  <div class="wrapper">
+    <!-- 側邊選單 -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-logo">📚 倒數計時</span>
+        <button class="sidebar-close" onclick="closeSidebar()">✕</button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">— 會考倒數 —</div>
+        <button class="sidebar-item active" id="sb-jhexam-116" onclick="selectMode('jhexam',116)">
+          <span class="sidebar-item-icon">📖</span>
+          <div class="sidebar-item-info">
+            <span class="sidebar-item-label">116 年會考</span>
+            <span class="sidebar-item-sub">2027 / 5 / 15</span>
+          </div>
+        </button>
+        <button class="sidebar-item" id="sb-jhexam-117" onclick="selectMode('jhexam',117)">
+          <span class="sidebar-item-icon">📖</span>
+          <div class="sidebar-item-info">
+            <span class="sidebar-item-label">117 年會考</span>
+            <span class="sidebar-item-sub">2028 / 5 / 20</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">— 學測倒數 —</div>
+        <button class="sidebar-item" id="sb-sat-116" onclick="selectMode('sat',116)">
+          <span class="sidebar-item-icon">🎓</span>
+          <div class="sidebar-item-info">
+            <span class="sidebar-item-label">116 年學測</span>
+            <span class="sidebar-item-sub">2027 / 1 / 16 ～ 1 / 18</span>
+          </div>
+        </button>
+        <button class="sidebar-item" id="sb-sat-117" onclick="selectMode('sat',117)">
+          <span class="sidebar-item-icon">🎓</span>
+          <div class="sidebar-item-info">
+            <span class="sidebar-item-label">117 年學測</span>
+            <span class="sidebar-item-sub">2028 / 1 / 15 ～ 1 / 17</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">— 統測倒數 —</div>
+        <button class="sidebar-item" id="sb-uni-116" onclick="selectMode('uni',116)">
+          <span class="sidebar-item-icon">📝</span>
+          <div class="sidebar-item-info">
+            <span class="sidebar-item-label">116 年統測</span>
+            <span class="sidebar-item-sub">2027 / 4 / 24 ～ 4 / 25</span>
+          </div>
+        </button>
+        <button class="sidebar-item" id="sb-uni-117" onclick="selectMode('uni',117)">
+          <span class="sidebar-item-icon">📝</span>
+          <div class="sidebar-item-info">
+            <span class="sidebar-item-label">117 年統測</span>
+            <span class="sidebar-item-sub">2028 / 4 / 29 ～ 4 / 30</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div class="topbar">
+      <button class="hamburger" onclick="openSidebar()" aria-label="選單">
+        <span></span><span></span><span></span>
+      </button>
+      <a class="logo" href="#">
+        <svg class="logo-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="6" width="20" height="24" rx="3" fill="rgba(232,40,74,0.15)" stroke="#e8284a" stroke-width="1.5"/>
+          <rect x="4" y="6" width="4" height="24" rx="2" fill="#e8284a" opacity="0.7"/>
+          <line x1="12" y1="13" x2="21" y2="13" stroke="#f5c842" stroke-width="1.4" stroke-linecap="round"/>
+          <line x1="12" y1="17" x2="21" y2="17" stroke="#f5c842" stroke-width="1.4" stroke-linecap="round" opacity="0.6"/>
+          <line x1="12" y1="21" x2="18" y2="21" stroke="#f5c842" stroke-width="1.4" stroke-linecap="round" opacity="0.4"/>
+          <g transform="translate(20,18) rotate(-38)">
+            <rect x="-2" y="-8" width="4" height="13" rx="1" fill="#f5c842"/>
+            <polygon points="-2,5 2,5 0,9" fill="#e8284a"/>
+            <rect x="-2" y="-10" width="4" height="3" rx="1" fill="rgba(255,255,255,0.4)"/>
+          </g>
+        </svg>
+        <div class="logo-text">
+          <span class="logo-main">會考倒數</span>
+          <span class="logo-sub">COUNTDOWN</span>
+        </div>
+      </a>
+      <div class="selector">
+        <button class="sel-btn active" onclick="selectMode('jhexam',116)">116 年</button>
+        <button class="sel-btn" onclick="selectMode('jhexam',117)">117 年</button>
+      </div>
+      <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    </div>
+
+    <div class="badge"><span class="badge-dot"></span>國中教育會考倒數</div>
+    <div class="quote" id="quoteEl"></div>
+
+    <div class="hero">
+      <div class="hero-year">會考</div>
+      <div class="hero-title" id="hero-title">116 年國中教育會考倒數</div>
+      <div class="hero-sub" id="hero-sub">TAIWAN · 116 / 5 / 15 · SATURDAY</div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-top">
+        <span>起始</span>
+        <span id="prog-pct">0%</span>
+        <span>會考日</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="countdown" id="countdown">
+      <div class="unit"><div class="unit-num" id="days">00</div><div class="unit-label">天</div></div>
+      <div class="unit"><div class="unit-num" id="hours">00</div><div class="unit-label">時</div></div>
+      <div class="unit"><div class="unit-num" id="minutes">00</div><div class="unit-label">分</div></div>
+      <div class="unit"><div class="unit-num" id="seconds">00</div><div class="unit-label">秒</div></div>
+    </div>
+
+    <div class="finished" id="finished">🎉 會考開始！加油！ 🎉</div>
+
+    <div class="date-bar">
+      <span class="date-icon">📅</span>
+      <div class="date-text">考試日期：<strong id="date-label">民國 116 年 5 月 15 日（星期六）</strong></div>
+    </div>
+
+    <!-- 116 年課程表 -->
+    <div class="schedule-wrap" id="schedule-116" style="display:none;">
+      <div class="schedule-title">— 116 年考試日程表 —</div>
+      <div class="schedule-tabs">
+        <button class="tab-btn active" onclick="showPanel('s116-day0', this, 'schedule-116')">5月15日（六）</button>
+        <button class="tab-btn" onclick="showPanel('s116-day1', this, 'schedule-116')">5月16日（日）</button>
+      </div>
+      <div class="schedule-grid show" id="s116-day0">
+        <table class="stbl">
+          <thead><tr><th>時間</th><th>科目</th></tr></thead>
+          <tbody>
+            <tr class="rest"><td>08:20 – 08:30</td><td>考試說明</td></tr>
+            <tr class="exam"><td>08:30 – 09:40<div class="dur">70 分鐘</div></td><td class="subj-cell">社會</td></tr>
+            <tr class="rest"><td>09:40 – 10:20</td><td>休息</td></tr>
+            <tr class="rest"><td>10:20 – 10:30</td><td>考試說明</td></tr>
+            <tr class="exam"><td>10:30 – 11:50<div class="dur">80 分鐘</div></td><td class="subj-cell">數學</td></tr>
+            <tr class="rest"><td>11:50 – 13:40</td><td>午休</td></tr>
+            <tr class="rest"><td>13:40 – 13:50</td><td>考試說明</td></tr>
+            <tr class="exam"><td>13:50 – 15:00<div class="dur">70 分鐘</div></td><td class="subj-cell">國文</td></tr>
+            <tr class="rest"><td>15:00 – 15:40</td><td>休息</td></tr>
+            <tr class="rest"><td>15:40 – 15:50</td><td>考試說明</td></tr>
+            <tr class="exam"><td>15:50 – 16:40<div class="dur">50 分鐘</div></td><td class="subj-cell">寫作測驗</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="schedule-grid" id="s116-day1">
+        <table class="stbl">
+          <thead><tr><th>時間</th><th>科目</th></tr></thead>
+          <tbody>
+            <tr class="rest"><td>08:20 – 08:30</td><td>考試說明</td></tr>
+            <tr class="exam"><td>08:30 – 09:40<div class="dur">70 分鐘</div></td><td class="subj-cell">自然</td></tr>
+            <tr class="rest"><td>09:40 – 10:20</td><td>休息</td></tr>
+            <tr class="rest"><td>10:20 – 10:30</td><td>考試說明</td></tr>
+            <tr class="exam"><td>10:30 – 11:30<div class="dur">60 分鐘</div></td><td class="subj-cell">英語（閱讀）</td></tr>
+            <tr class="rest"><td>11:30 – 12:00</td><td>休息</td></tr>
+            <tr class="rest"><td>12:00 – 12:05</td><td>考試說明</td></tr>
+            <tr class="exam"><td>12:05 – 12:30<div class="dur">25 分鐘</div></td><td class="subj-cell">英語（聽力）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 117 年課程表 -->
+    <div class="schedule-wrap" id="schedule-117" style="display:none;">
+      <div class="schedule-title">— 117 年考試日程表 —</div>
+      <div class="schedule-tabs">
+        <button class="tab-btn active" onclick="showPanel('s117-day0', this, 'schedule-117')">5月20日（六）</button>
+        <button class="tab-btn" onclick="showPanel('s117-day1', this, 'schedule-117')">5月21日（日）</button>
+      </div>
+      <div class="schedule-grid show" id="s117-day0">
+        <table class="stbl">
+          <thead><tr><th>時間</th><th>科目</th></tr></thead>
+          <tbody>
+            <tr class="rest"><td>08:20 – 08:30</td><td>考試說明</td></tr>
+            <tr class="exam"><td>08:30 – 09:40<div class="dur">70 分鐘</div></td><td class="subj-cell">社會</td></tr>
+            <tr class="rest"><td>09:40 – 10:20</td><td>休息</td></tr>
+            <tr class="rest"><td>10:20 – 10:30</td><td>考試說明</td></tr>
+            <tr class="exam"><td>10:30 – 11:50<div class="dur">80 分鐘</div></td><td class="subj-cell">數學</td></tr>
+            <tr class="rest"><td>11:50 – 13:40</td><td>午休</td></tr>
+            <tr class="rest"><td>13:40 – 13:50</td><td>考試說明</td></tr>
+            <tr class="exam"><td>13:50 – 15:00<div class="dur">70 分鐘</div></td><td class="subj-cell">國文</td></tr>
+            <tr class="rest"><td>15:00 – 15:40</td><td>休息</td></tr>
+            <tr class="rest"><td>15:40 – 15:50</td><td>考試說明</td></tr>
+            <tr class="exam"><td>15:50 – 16:40<div class="dur">50 分鐘</div></td><td class="subj-cell">寫作測驗</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="schedule-grid" id="s117-day1">
+        <table class="stbl">
+          <thead><tr><th>時間</th><th>科目</th></tr></thead>
+          <tbody>
+            <tr class="rest"><td>08:20 – 08:30</td><td>考試說明</td></tr>
+            <tr class="exam"><td>08:30 – 09:40<div class="dur">70 分鐘</div></td><td class="subj-cell">自然</td></tr>
+            <tr class="rest"><td>09:40 – 10:20</td><td>休息</td></tr>
+            <tr class="rest"><td>10:20 – 10:30</td><td>考試說明</td></tr>
+            <tr class="exam"><td>10:30 – 11:30<div class="dur">60 分鐘</div></td><td class="subj-cell">英語（閱讀）</td></tr>
+            <tr class="rest"><td>11:30 – 12:00</td><td>休息</td></tr>
+            <tr class="rest"><td>12:00 – 12:05</td><td>考試說明</td></tr>
+            <tr class="exam"><td>12:05 – 12:30<div class="dur">25 分鐘</div></td><td class="subj-cell">英語（聽力）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subject-timer-wrap" id="subjectTimerWrap">
+      <div class="subject-timer-title">— 科目計時器 —</div>
+
+      <div class="subject-timer-card">
+        <div class="timer-row">
+          <label for="subjectSelect">選擇科目</label>
+          <select id="subjectSelect" onchange="resetSubjectTimer()">
+            <option value="social">社會（70 分）</option>
+            <option value="math">數學（80 分）</option>
+            <option value="chinese">國文（70 分）</option>
+            <option value="writing">寫作測驗（50 分）</option>
+            <option value="science">自然（70 分）</option>
+            <option value="english_reading">英語（閱讀）（60 分）</option>
+            <option value="english_listening">英語（聽力）（25 分）</option>
+          </select>
+        </div>
+
+        <div class="timer-display" id="subjectTimerDisplay">70:00</div>
+        <div class="timer-subtext" id="subjectTimerSubtext">待機中</div>
+
+        <div class="timer-buttons">
+          <button class="timer-btn start" onclick="startSubjectTimer()">開始</button>
+          <button class="timer-btn pause" onclick="pauseSubjectTimer()">暫停</button>
+          <button class="timer-btn stop" onclick="stopSubjectTimer()">停止</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="motto">每一秒都是你的機會 <span>·</span> 全力以赴</div>
+  </div>
+
+  <script>
+    const QUOTES = {
+      jhexam: {
+        116: [
+          '「今天的努力，是明天最美的答案。」',
+          '「距離 116 會考越近，你的準備越充分。」',
+          '「每一次複習，都是在為自己加分。」',
+          '「你比你想像中的還要強大。」',
+          '「專注當下，勝過擔憂未來。」',
+          '「116 會考是終點，也是新起點。」',
+          '「讀書不是為了別人，是為了未來的自己。」',
+          '「每一頁課本，都是通往未來的橋。」',
+          '「堅持，是最好的天賦。」',
+          '「汗水不會說謊，努力終有回報。」',
+          '「累了就休息，但別忘記再出發。」',
+          '「你現在的認真，是給未來最好的禮物。」',
+          '「不是因為有希望才堅持，是因為堅持才有希望。」',
+          '「會考不是終點，但努力絕對值得。」',
+          '「每一道題，都是你能力的展現。」',
+          '「困難是暫時的，放棄才是永遠的。」',
+          '「只要努力，沒有什麼是不可能的。」',
+          '「再難的題，做多了就會了。」',
+          '「讀得越深，走得越遠。」',
+          '「別人在休息的時候，你在進步。」',
+          '「成功留給有準備的人。」',
+          '「現在多流一滴汗，考場少失一分。」',
+          '「你的努力，時間都看得見。」',
+          '「不要羨慕別人，專心走自己的路。」',
+          '「今天比昨天好一點，就是進步。」',
+          '「讀書的苦是暫時的，不讀書的苦是一輩子的。」',
+          '「116 會考，你一定可以。」',
+          '「把每一天當作考前最後一天。」',
+          '「複習一遍，信心多一分。」',
+          '「專注是最好的學習方法。」',
+          '「不怕慢，只怕站。」',
+          '「每天進步1%，一年後你會強大37倍。」',
+          '「你的極限，比你以為的高得多。」',
+          '「今天的痛苦，是明天的實力。」',
+          '「把不會的變成會的，就是成長。」',
+          '「學習沒有捷徑，只有腳踏實地。」',
+          '「每一個錯誤，都是學習的機會。」',
+          '「別讓手機偷走你的未來。」',
+          '「靜下心來讀書，是對自己最大的尊重。」',
+          '「相信自己，你值得更好的結果。」',
+          '「116 會考，用實力說話。」',
+          '「努力的樣子，最帥氣。」',
+          '「把困難踩在腳下，才能站得更高。」',
+          '「認真讀書的你，是最閃亮的。」',
+          '「目標清晰，努力就有方向。」',
+          '「今天的苦讀，換來明天的從容。」',
+          '「你不是一個人在戰鬥，加油！」',
+          '「成功的路上沒有電梯，只有樓梯。」',
+          '「每一分每一秒，都是寶貴的資源。」',
+          '「讀書是最划算的投資。」',
+          '「放棄很容易，但後悔很久。」',
+          '「考場上的自信，來自平時的努力。」',
+          '「你選擇努力的每一天，都在改變命運。」',
+          '「不是最聰明的贏，是最努力的贏。」',
+          '「腦袋不夠用，就用時間補。」',
+          '「把每一題當作禮物，拆開它。」',
+          '「讀書苦，但不讀書更苦。」',
+          '「你的未來，由現在的你決定。」',
+          '「不要輸給昨天的自己。」',
+          '「再撐一下，黎明就快來了。」',
+          '「努力不一定成功，但放棄一定失敗。」',
+          '「把每次錯誤都變成下次對的理由。」',
+          '「116 會考倒數中，把握每一天。」',
+          '「你已經走了這麼遠，別在終點前停下。」',
+          '「做完一頁練習題，離目標近一步。」',
+          '「不管多難，撐過去就是你的。」',
+          '「你努力的樣子，讓未來的你感謝。」',
+          '「今天認真，明天從容。」',
+          '「每個厲害的人，都曾是認真讀書的孩子。」',
+          '「沉住氣，一題一題來。」',
+          '「你值得你想要的那個未來。」',
+          '「讀書是跑長跑，不是短跑。」',
+          '「把課本讀薄，把知識讀透。」',
+          '「只要開始，就不算太晚。」',
+          '「116 會考，全力以赴！」',
+          '「你付出的每一分努力，都不會白費。」',
+          '「今天多懂一點，考場少慌一點。」',
+          '「累了抬頭看看目標，再繼續。」',
+          '「把不確定變成確定，靠的是練習。」',
+          '「你的認真，是最強的武器。」',
+          '「讀到心裡去，不是眼睛掃過去。」',
+          '「一步一步來，終點一定到。」',
+          '「加油！你比自己想的更能幹。」',
+          '「學習的路上，堅持最重要。」',
+          '「每天早起一小時，勝過臨時抱佛腳。」',
+          '「你現在的努力，是未來的驕傲。」',
+          '「116 會考，你準備好了！」',
+          '「把壓力變成動力，把困難變成挑戰。」',
+          '「讀書是給自己的，不是給別人的。」',
+          '「你比昨天更好，這就夠了。」',
+          '「把握時間，不留遺憾。」',
+          '「錯了不怕，搞懂了就是進步。」',
+          '「每次複習都是在鞏固你的底氣。」',
+          '「認真的你，一定會發光。」',
+          '「116 會考，展現真實的你。」',
+          '「堅持到底，勝利就是你的。」',
+          '「不放棄的人，最後都贏了。」',
+          '「你的努力，終將成就不凡的你。」',
+        ],
+        117: [
+          '「117 會考，現在開始還不晚。」',
+          '「播下努力的種子，117 年收穫成果。」',
+          '「別讓今天的懶惰，成為明天的遺憾。」',
+          '「困難是暫時的，放棄才是永遠的。」',
+          '「現在的汗水，是未來驕傲的淚水。」',
+          '「時間是公平的，看你怎麼用它。」',
+          '「117 會考的距離，用努力來縮短。」',
+          '「每一天的積累，都是實力的增長。」',
+          '「你種下的每一粒努力，都會開花。」',
+          '「別等準備好了再開始，開始了才算準備。」',
+          '「為 117 會考努力，就是為未來的自己努力。」',
+          '「學習是長跑，慢慢跑才能跑到終點。」',
+          '「你今天的認真，是 117 年的底氣。」',
+          '「把基礎打好，117 會考自然不怕。」',
+          '「每一道題都是練習，每次練習都是成長。」',
+          '「不要因為路遠就放棄，要因為路遠更努力。」',
+          '「你現在努力的模樣，是最美的風景。」',
+          '「117 會考，你有時間，你有能力。」',
+          '「慢慢來，但不要停。」',
+          '「讀書如磨刀，刀越磨越利。」',
+          '「把今天的困難，變成明天的容易。」',
+          '「每次學到新東西，都是對未來的投資。」',
+          '「你現在奠定的基礎，117 年會發揮作用。」',
+          '「別急，一步一步走，終點一定到。」',
+          '「今天的你，比昨天的你更強。」',
+          '「積少成多，每天進步一點點。」',
+          '「117 年的會考，你正在準備中。」',
+          '「認真對待每一天，每一天都有意義。」',
+          '「學習沒有捷徑，但有方法。」',
+          '「你付出的時間，都會回報給你。」',
+          '「不怕起步晚，怕的是不起步。」',
+          '「把每個知識點搞懂，是最好的準備。」',
+          '「你的努力，連時間都在替你記錄。」',
+          '「117 會考，你將以實力迎接它。」',
+          '「讀書不是負擔，是給自己的禮物。」',
+          '「你今天多讀一頁，117 年多一份把握。」',
+          '「堅持是世界上最強的力量。」',
+          '「你比你以為的，更有潛力。」',
+          '「一點一滴的積累，最終成就不凡。」',
+          '「把學習當作習慣，不是任務。」',
+          '「117 會考離你不遠，離你更近的是努力。」',
+          '「今天認真的模樣，是未來成功的預告。」',
+          '「遇到困難就解決它，這就是成長。」',
+          '「你種下的努力，117 年會長成大樹。」',
+          '「別讓時間白白流過，把它變成實力。」',
+          '「讀書的每一刻，都在改變你的未來。」',
+          '「你有足夠的時間，也有足夠的能力。」',
+          '「117 會考，你一定做得到。」',
+          '「把今天的不懂，變成明天的懂。」',
+          '「學習路上有你，不孤單。」',
+          '「每一次努力都算數，不要小看自己。」',
+          '「你現在走的每一步，都在靠近目標。」',
+          '「117 會考，用準備換信心。」',
+          '「不輕易放棄，是最好的學習態度。」',
+          '「把困難拆小，一個一個解決。」',
+          '「你的進步，比你自己看到的還要多。」',
+          '「讀書的苦是暫時的，實力是永遠的。」',
+          '「為 117 會考努力，就是為自己負責。」',
+          '「每個厲害的人，都曾認真讀過書。」',
+          '「你今天的努力，117 年的你會感激。」',
+          '「把目標寫下來，每天看一遍。」',
+          '「117 會考倒數中，每天都很重要。」',
+          '「不是最聰明的贏，是最堅持的贏。」',
+          '「你的未來，由現在的選擇決定。」',
+          '「讀書是最安靜的改變。」',
+          '「每天多努力一點，差距就拉開了。」',
+          '「117 年的成功，從今天開始累積。」',
+          '「你值得你努力換來的未來。」',
+          '「把不確定變成確定，靠的是練習。」',
+          '「今天的複習，是明天的信心來源。」',
+          '「117 會考，全力以赴不留遺憾。」',
+          '「你選擇努力的樣子，最令人敬佩。」',
+          '「把每次學習都當作最後一次機會。」',
+          '「沉穩學習，117 年笑著走進考場。」',
+          '「你已經在努力了，繼續保持。」',
+          '「學習是一場修煉，你正在修煉中。」',
+          '「117 會考，你的準備就是你的武器。」',
+          '「每一頁筆記，都是你努力的證明。」',
+          '「不要放棄，最難的時候往往是最接近成功的時候。」',
+          '「你現在的認真，是 117 年最強的準備。」',
+          '「把時間花在值得的事情上。」',
+          '「117 會考，你正走在正確的路上。」',
+          '「讀書不孤單，因為未來在等你。」',
+          '「你今天多懂一點，117 年少慌一點。」',
+          '「努力是最公平的事，每個人都能做到。」',
+          '「你比你想的更有潛力，相信自己。」',
+          '「117 會考，全力衝刺！」',
+          '「把每天都過得有意義，是給自己最好的禮物。」',
+          '「你的努力，正在悄悄改變你的人生。」',
+          '「一步一腳印，117 會考等著你。」',
+          '「不管多難，你都撐過來了，繼續。」',
+          '「把學習當成冒險，每天都有新發現。」',
+          '「你現在的堅持，117 年會成為你的驕傲。」',
+          '「117 會考，你準備好了！」',
+          '「認真讀書的你，已經贏了一半。」',
+          '「努力的你，未來一定不一樣。」',
+          '「117 會考，用你的實力去征服它。」',
+          '「你的每一分努力，都不會白費。」',
+          '「繼續走，終點就在前方。」',
+        ]
+      },
+      sat: {
+        116: [
+          '「學測不只考知識，也考你的意志力。」',
+          '「116 學測，是你展現實力的舞台。」',
+          '「每一題都是機會，把握它。」',
+          '「成功不是偶然，而是每一天努力的累積。」',
+          '「別讓昨天佔用太多今天。」',
+          '「116 學測，用實力說話。」',
+          '「學測考的不只是成績，是你的底氣。」',
+          '「你讀的每一頁，都在為 116 學測蓄力。」',
+          '「把每科都讀好，學測才有底氣。」',
+          '「不怕難，只怕不去面對。」',
+          '「116 學測，你準備好了嗎？繼續努力！」',
+          '「每一次模擬考，都是為學測熱身。」',
+          '「學測的勝負，在你每天的選擇。」',
+          '「116 學測，你的機會就在眼前。」',
+          '「把每個知識點搞透，學測才不怕。」',
+          '「努力的人，運氣都不會太差。」',
+          '「你現在的苦讀，換來學測的從容。」',
+          '「116 學測，全力以赴不留遺憾。」',
+          '「學測是展現你努力的地方。」',
+          '「你比你以為的，更有實力。」',
+          '「把時間花在刀刃上，學測才有收穫。」',
+          '「116 學測，你的未來由你決定。」',
+          '「每一份練習卷，都是實力的累積。」',
+          '「學測前的每一天，都要好好把握。」',
+          '「你現在的認真，學測會給你答案。」',
+          '「不要輸給壓力，要贏過它。」',
+          '「116 學測，你值得更好的結果。」',
+          '「讀書不是為了考試，是為了自己的未來。」',
+          '「把弱點變成強項，是學測前最重要的事。」',
+          '「你的努力，學測會回報你。」',
+          '「116 學測，沉穩應戰！」',
+          '「每一次複習，都在提升你的勝率。」',
+          '「學測不可怕，可怕的是放棄準備。」',
+          '「你現在付出的，學測那天都會回來。」',
+          '「116 學測倒數，把握每一分鐘。」',
+          '「專注備考，學測自然不慌。」',
+          '「你的努力，是學測最好的護身符。」',
+          '「116 學測，你已經在路上了。」',
+          '「讀書讀到心裡，學測才能發揮。」',
+          '「別讓手機偷走你的學測機會。」',
+          '「116 學測，認真的你最美。」',
+          '「每天進步一點，學測就不一樣。」',
+          '「你選擇努力，學測就選擇你。」',
+          '「把模擬考的錯誤，變成學測的正確。」',
+          '「116 學測，你的實力說了算。」',
+          '「讀書的累，是最值得的累。」',
+          '「你的堅持，是學測最強的後盾。」',
+          '「116 學測，相信自己！」',
+          '「把每一天都當作學測前最後一天。」',
+          '「努力備考，學測那天才能微笑。」',
+          '「116 學測，你一定可以！」',
+          '「學測考場上的自信，來自今天的努力。」',
+          '「你有能力，只要你願意努力。」',
+          '「116 學測，把你最好的狀態帶進去。」',
+          '「每一個熬夜讀書的夜晚，都值得。」',
+          '「學測是一場馬拉松，不是短跑。」',
+          '「你的認真，是學測最好的準備。」',
+          '「116 學測，展現真實的你。」',
+          '「把壓力轉化為動力，學測才能發揮。」',
+          '「你讀的每一行字，都是學測的底氣。」',
+          '「116 學測，你不是一個人在戰鬥。」',
+          '「堅持到最後一刻，學測才算完整。」',
+          '「你的努力，終將在學測那天閃光。」',
+          '「116 學測，加油！你做得到！」',
+          '「把學測當作展現自己的舞台。」',
+          '「你今天的努力，是學測那天的信心。」',
+          '「116 學測，全力衝刺！」',
+          '「不管多難，都不放棄，學測才能贏。」',
+          '「你的努力，讓學測成為你的舞台。」',
+          '「116 學測，相信努力的力量。」',
+          '「每一道練習題，都在幫你備戰學測。」',
+          '「你現在的辛苦，是學測成功的墊腳石。」',
+          '「116 學測，你已經準備好了。」',
+          '「讀書是最安靜卻最有力的改變。」',
+          '「你的汗水，是學測最好的養分。」',
+          '「116 學測，把握最後的時光。」',
+          '「不要放棄，學測的成功在等你。」',
+          '「你今天多讀一點，學測多一分把握。」',
+          '「116 學測，堅持就是勝利。」',
+          '「把每個知識搞懂，是對學測最好的準備。」',
+          '「你的努力，是學測最強的武器。」',
+          '「116 學測，用你的實力征服它！」',
+          '「學測前的每一秒，都有它的價值。」',
+          '「你不放棄，學測就不會放棄你。」',
+          '「116 學測，你的未來在呼喚你。」',
+          '「把讀書當習慣，學測就不是負擔。」',
+          '「你的堅持，是學測最好的禮物。」',
+          '「116 學測，認真備考，笑著上場！」',
+          '「每一次努力，都是學測勝利的基石。」',
+          '「你已經走了這麼遠，別在學測前停下。」',
+          '「116 學測，你值得最好的結果。」',
+          '「讀書的路雖然長，但學測是最好的終點。」',
+          '「你的認真，讓 116 學測充滿可能。」',
+          '「把每天都過得有意義，學測才有意義。」',
+          '「116 學測，你的努力終將開花。」',
+          '「不怕慢，只怕站，學測前繼續走。」',
+          '「你現在的努力，是 116 學測最強的保障。」',
+          '「116 學測，全力以赴，無悔前行！」',
+        ],
+        117: [
+          '「為 117 學測努力，現在開始還不晚。」',
+          '「每一分的進步，都是對未來的投資。」',
+          '「只要堅持，終點就在前方。」',
+          '「你的努力，時間都看得見。」',
+          '「成功的路上並不擁擠，因為堅持的人不多。」',
+          '「117 學測，你有充裕的時間準備。」',
+          '「現在播下的種子，117 年開花結果。」',
+          '「把基礎打好，117 學測自然不怕。」',
+          '「每一天的學習，都是為 117 學測蓄積能量。」',
+          '「你現在的努力，是 117 年最強的準備。」',
+          '「學習是一場長跑，117 學測是終點之一。」',
+          '「別急，慢慢來，117 學測你一定能到。」',
+          '「今天努力一點，117 年少慌一點。」',
+          '「117 學測，你有時間，你有能力。」',
+          '「把每個弱點都補強，117 學測才不慌。」',
+          '「你現在種下的努力，117 年都會收穫。」',
+          '「讀書如滴水穿石，117 學測你一定行。」',
+          '「117 學測，從今天開始認真準備。」',
+          '「每一次學習，都是向 117 學測靠近一步。」',
+          '「你今天的認真，是 117 年的底氣。」',
+          '「不要等準備好了再開始，現在就是最好的時機。」',
+          '「117 學測，用時間換實力。」',
+          '「把不懂的搞懂，是備考 117 學測最好的方法。」',
+          '「你有足夠的時間，也有足夠的潛力。」',
+          '「117 學測，每天進步一點點。」',
+          '「學習的積累，117 年會讓你看到成果。」',
+          '「你現在的堅持，是 117 學測成功的保障。」',
+          '「把學習當習慣，117 學測就是水到渠成。」',
+          '「117 學測，你正走在正確的路上。」',
+          '「每一頁課本，都是 117 學測的底牌。」',
+          '「不怕起步晚，怕的是不起步。」',
+          '「117 學測，你的未來由你決定。」',
+          '「把今天的不懂，變成明天的懂。」',
+          '「你現在的努力，117 年的你會感激。」',
+          '「積少成多，117 學測你一定行。」',
+          '「117 學測，每一天都是準備的機會。」',
+          '「把困難分解，一個一個克服。」',
+          '「你的努力，正在悄悄改變你的未來。」',
+          '「117 學測，相信努力的力量。」',
+          '「讀書是最安靜的改變，也是最深遠的改變。」',
+          '「你今天多讀一頁，117 年多一份把握。」',
+          '「117 學測，慢慢積累，穩穩前進。」',
+          '「把每一個知識點都弄清楚，是最好的備考。」',
+          '「你的進步，比你自己看到的還要多。」',
+          '「117 學測，你有充分的時間去準備。」',
+          '「不是最聰明的贏，是最堅持的贏。」',
+          '「你今天的學習，是 117 學測的燃料。」',
+          '「117 學測，一步一步走，終點一定到。」',
+          '「把學習當冒險，每天都有新發現。」',
+          '「你的努力，連時間都在替你喝采。」',
+          '「117 學測，從基礎開始，穩步前進。」',
+          '「讀書的每一刻，都在改變你的未來。」',
+          '「你今天的辛苦，是 117 年的驕傲。」',
+          '「117 學測，你正在建立屬於你的實力。」',
+          '「把每次錯誤都當作禮物，從中學習。」',
+          '「你現在努力的樣子，是最美的風景。」',
+          '「117 學測，全力以赴，不留遺憾。」',
+          '「把弱科補強，是備考 117 學測的關鍵。」',
+          '「你有時間，你有能力，你一定行。」',
+          '「117 學測，今天的你正在為它蓄力。」',
+          '「讀書不孤單，因為未來在等你。」',
+          '「你今天的認真，是 117 學測最好的禮物。」',
+          '「117 學測，把每一天都過得有意義。」',
+          '「把目標訂清楚，努力才有方向。」',
+          '「你的努力，117 年都會有所回報。」',
+          '「117 學測，你的實力正在慢慢積累。」',
+          '「每天進步1%，117 學測你會很不一樣。」',
+          '「你現在的學習，是未來的基礎。」',
+          '「117 學測，不慌不忙，穩步前行。」',
+          '「把每天的學習當作對未來的承諾。」',
+          '「你選擇努力的每一天，都在靠近夢想。」',
+          '「117 學測，你值得你付出的那個未來。」',
+          '「讀書是最划算的投資，117 學測是收穫的時刻。」',
+          '「你現在的堅持，117 年會成為你的驕傲。」',
+          '「117 學測，認真備考，笑著上場。」',
+          '「把時間花在學習上，是最明智的選擇。」',
+          '「你的努力，是 117 學測最強的武器。」',
+          '「117 學測，你已經在準備中了，繼續！」',
+          '「不管多難，你都能面對，因為你在努力。」',
+          '「你今天種下的努力，117 年會長成大樹。」',
+          '「117 學測，每一天都是新的機會。」',
+          '「把讀書當作給自己的禮物，117 學測才甜。」',
+          '「你的認真，是 117 學測成功的預告。」',
+          '「117 學測，你準備的每一天都算數。」',
+          '「讀到懂為止，是備考最好的態度。」',
+          '「你的努力，正在為 117 學測鋪路。」',
+          '「117 學測，你的未來在呼喚你！」',
+          '「把每一次練習都當作真正的考試。」',
+          '「你現在的努力，117 年的你會感謝你。」',
+          '「117 學測，一點一滴，成就非凡。」',
+          '「不放棄的人，最後都找到了屬於自己的路。」',
+          '「你今天的堅持，是 117 學測最好的投資。」',
+          '「117 學測，相信自己，你一定行！」',
+          '「把學習的苦，變成未來的甜。」',
+          '「你正在為 117 學測努力，這本身就值得驕傲。」',
+          '「117 學測，全力衝刺，無悔前行！」',
+          '「每一天的努力，都是 117 學測成功的基石。」',
+          '「你的未來，由你現在的努力決定。」',
+          '「117 學測，加油！你做得到！」',
+        ]
+      },
+      uni: {
+        116: [
+          '「統測不只是考試，是你技術實力的證明。」',
+          '「116 統測，用你的專業說話。」',
+          '「每一次練習，都是為統測蓄積能量。」',
+          '「你選擇了技職這條路，就用統測證明你的價值。」',
+          '「116 統測，你的努力終將被看見。」',
+          '「技職不是第二選擇，是你的第一志願。」',
+          '「統測考的是實力，而你正在建立它。」',
+          '「116 統測，全力以赴不留遺憾。」',
+          '「你讀的每一頁，都是統測的底牌。」',
+          '「把專業學好，116 統測自然不怕。」',
+          '「努力備考統測，是對自己最好的尊重。」',
+          '「116 統測，你值得更好的結果。」',
+          '「每一次模擬考，都是為統測熱身。」',
+          '「統測的勝負，在你每天的選擇。」',
+          '「116 統測，你的機會就在眼前。」',
+          '「把每個知識點搞透，統測才不怕。」',
+          '「努力的人，運氣都不會太差。」',
+          '「你現在的苦讀，換來統測的從容。」',
+          '「116 統測，沉穩應戰！」',
+          '「你比你以為的，更有實力。」',
+          '「把時間花在刀刃上，統測才有收穫。」',
+          '「116 統測，你的未來由你決定。」',
+          '「每一份練習題，都是實力的累積。」',
+          '「統測前的每一天，都要好好把握。」',
+          '「你現在的認真，統測會給你答案。」',
+          '「不要輸給壓力，要贏過它。」',
+          '「116 統測，相信努力的力量。」',
+          '「讀書不是為了考試，是為了自己的未來。」',
+          '「把弱點變成強項，是統測前最重要的事。」',
+          '「你的努力，統測會回報你。」',
+          '「116 統測，你有能力，只要你願意努力。」',
+          '「每一次複習，都在提升你的勝率。」',
+          '「統測不可怕，可怕的是放棄準備。」',
+          '「你現在付出的，統測那天都會回來。」',
+          '「116 統測倒數，把握每一分鐘。」',
+          '「專注備考，統測自然不慌。」',
+          '「你的努力，是統測最好的護身符。」',
+          '「116 統測，你已經在路上了。」',
+          '「讀書讀到心裡，統測才能發揮。」',
+          '「別讓手機偷走你的統測機會。」',
+          '「116 統測，認真的你最美。」',
+          '「每天進步一點，統測就不一樣。」',
+          '「你選擇努力，統測就選擇你。」',
+          '「把模擬考的錯誤，變成統測的正確。」',
+          '「116 統測，你的實力說了算。」',
+          '「讀書的累，是最值得的累。」',
+          '「你的堅持，是統測最強的後盾。」',
+          '「116 統測，相信自己！」',
+          '「把每一天都當作統測前最後一天。」',
+          '「努力備考，統測那天才能微笑。」',
+          '「116 統測，你一定可以！」',
+          '「統測考場上的自信，來自今天的努力。」',
+          '「你有能力，只要你願意全力以赴。」',
+          '「116 統測，把你最好的狀態帶進去。」',
+          '「每一個熬夜讀書的夜晚，都值得。」',
+          '「統測是一場馬拉松，不是短跑。」',
+          '「你的認真，是統測最好的準備。」',
+          '「116 統測，展現真實的你。」',
+          '「把壓力轉化為動力，統測才能發揮。」',
+          '「你讀的每一行字，都是統測的底氣。」',
+          '「116 統測，你不是一個人在戰鬥。」',
+          '「堅持到最後一刻，統測才算完整。」',
+          '「你的努力，終將在統測那天閃光。」',
+          '「116 統測，加油！你做得到！」',
+          '「把統測當作展現自己的舞台。」',
+          '「你今天的努力，是統測那天的信心。」',
+          '「116 統測，全力衝刺！」',
+          '「不管多難，都不放棄，統測才能贏。」',
+          '「你的努力，讓統測成為你的舞台。」',
+          '「116 統測，相信努力的力量。」',
+          '「每一道練習題，都在幫你備戰統測。」',
+          '「你現在的辛苦，是統測成功的墊腳石。」',
+          '「116 統測，你已經準備好了。」',
+          '「讀書是最安靜卻最有力的改變。」',
+          '「你的汗水，是統測最好的養分。」',
+          '「116 統測，把握最後的時光。」',
+          '「不要放棄，統測的成功在等你。」',
+          '「你今天多讀一點，統測多一分把握。」',
+          '「116 統測，堅持就是勝利。」',
+          '「把每個知識搞懂，是對統測最好的準備。」',
+          '「你的努力，是統測最強的武器。」',
+          '「116 統測，用你的實力征服它！」',
+          '「統測前的每一秒，都有它的價值。」',
+          '「你不放棄，統測就不會放棄你。」',
+          '「116 統測，你的未來在呼喚你。」',
+          '「把讀書當習慣，統測就不是負擔。」',
+          '「你的堅持，是統測最好的禮物。」',
+          '「116 統測，認真備考，笑著上場！」',
+          '「每一次努力，都是統測勝利的基石。」',
+          '「你已經走了這麼遠，別在統測前停下。」',
+          '「116 統測，你值得最好的結果。」',
+          '「讀書的路雖然長，但統測是最好的終點。」',
+          '「你的認真，讓 116 統測充滿可能。」',
+          '「把每天都過得有意義，統測才有意義。」',
+          '「116 統測，你的努力終將開花。」',
+          '「不怕慢，只怕站，統測前繼續走。」',
+          '「你現在的努力，是 116 統測最強的保障。」',
+          '「116 統測，全力以赴，無悔前行！」',
+        ],
+        117: [
+          '「117 統測，現在開始準備還不晚。」',
+          '「每一天的學習，都是為 117 統測蓄積能量。」',
+          '「你現在種下的努力，117 統測時收穫。」',
+          '「把基礎打好，117 統測自然不怕。」',
+          '「117 統測，你有時間，你有能力。」',
+          '「技職的路，用統測來證明你的價值。」',
+          '「117 統測，從今天開始認真準備。」',
+          '「每一次學習，都是向 117 統測靠近一步。」',
+          '「你今天的認真，是 117 年的底氣。」',
+          '「不要等準備好了再開始，現在就是最好的時機。」',
+          '「117 統測，用時間換實力。」',
+          '「把不懂的搞懂，是備考 117 統測最好的方法。」',
+          '「你有足夠的時間，也有足夠的潛力。」',
+          '「117 統測，每天進步一點點。」',
+          '「學習的積累，117 年會讓你看到成果。」',
+          '「你現在的堅持，是 117 統測成功的保障。」',
+          '「把學習當習慣，117 統測就是水到渠成。」',
+          '「117 統測，你正走在正確的路上。」',
+          '「每一頁課本，都是 117 統測的底牌。」',
+          '「不怕起步晚，怕的是不起步。」',
+          '「117 統測，你的未來由你決定。」',
+          '「把今天的不懂，變成明天的懂。」',
+          '「你現在的努力，117 年的你會感激。」',
+          '「積少成多，117 統測你一定行。」',
+          '「117 統測，每一天都是準備的機會。」',
+          '「把困難分解，一個一個克服。」',
+          '「你的努力，正在悄悄改變你的未來。」',
+          '「117 統測，相信努力的力量。」',
+          '「讀書是最安靜的改變，也是最深遠的改變。」',
+          '「你今天多讀一頁，117 年多一份把握。」',
+          '「117 統測，慢慢積累，穩穩前進。」',
+          '「把每一個知識點都弄清楚，是最好的備考。」',
+          '「你的進步，比你自己看到的還要多。」',
+          '「117 統測，你有充分的時間去準備。」',
+          '「不是最聰明的贏，是最堅持的贏。」',
+          '「你今天的學習，是 117 統測的燃料。」',
+          '「117 統測，一步一步走，終點一定到。」',
+          '「把學習當冒險，每天都有新發現。」',
+          '「你的努力，連時間都在替你喝采。」',
+          '「117 統測，從基礎開始，穩步前進。」',
+          '「讀書的每一刻，都在改變你的未來。」',
+          '「你今天的辛苦，是 117 年的驕傲。」',
+          '「117 統測，你正在建立屬於你的實力。」',
+          '「把每次錯誤都當作禮物，從中學習。」',
+          '「你現在努力的樣子，是最美的風景。」',
+          '「117 統測，全力以赴，不留遺憾。」',
+          '「把弱科補強，是備考 117 統測的關鍵。」',
+          '「你有時間，你有能力，你一定行。」',
+          '「117 統測，今天的你正在為它蓄力。」',
+          '「讀書不孤單，因為未來在等你。」',
+          '「你今天的認真，是 117 統測最好的禮物。」',
+          '「117 統測，把每一天都過得有意義。」',
+          '「把目標訂清楚，努力才有方向。」',
+          '「你的努力，117 年都會有所回報。」',
+          '「117 統測，你的實力正在慢慢積累。」',
+          '「每天進步1%，117 統測你會很不一樣。」',
+          '「你現在的學習，是未來的基礎。」',
+          '「117 統測，不慌不忙，穩步前行。」',
+          '「把每天的學習當作對未來的承諾。」',
+          '「你選擇努力的每一天，都在靠近夢想。」',
+          '「117 統測，你值得你付出的那個未來。」',
+          '「讀書是最划算的投資，117 統測是收穫的時刻。」',
+          '「你現在的堅持，117 年會成為你的驕傲。」',
+          '「117 統測，認真備考，笑著上場。」',
+          '「把時間花在學習上，是最明智的選擇。」',
+          '「你的努力，是 117 統測最強的武器。」',
+          '「117 統測，你已經在準備中了，繼續！」',
+          '「不管多難，你都能面對，因為你在努力。」',
+          '「你今天種下的努力，117 年會長成大樹。」',
+          '「117 統測，每一天都是新的機會。」',
+          '「把讀書當作給自己的禮物，117 統測才甜。」',
+          '「你的認真，是 117 統測成功的預告。」',
+          '「117 統測，你準備的每一天都算數。」',
+          '「讀到懂為止，是備考最好的態度。」',
+          '「你的努力，正在為 117 統測鋪路。」',
+          '「117 統測，你的未來在呼喚你！」',
+          '「把每一次練習都當作真正的考試。」',
+          '「你現在的努力，117 年的你會感謝你。」',
+          '「117 統測，一點一滴，成就非凡。」',
+          '「不放棄的人，最後都找到了屬於自己的路。」',
+          '「你今天的堅持，是 117 統測最好的投資。」',
+          '「117 統測，相信自己，你一定行！」',
+          '「把學習的苦，變成未來的甜。」',
+          '「你正在為 117 統測努力，這本身就值得驕傲。」',
+          '「117 統測，全力衝刺，無悔前行！」',
+          '「每一天的努力，都是 117 統測成功的基石。」',
+          '「你的未來，由你現在的努力決定。」',
+          '「選擇技職，用統測證明自己的價值。」',
+          '「117 統測，你的實力與眾不同。」',
+          '「把每一個專業知識學透，117 統測才穩。」',
+          '「你的堅持，是 117 統測成功的關鍵。」',
+          '「117 統測，慢慢來，但不要停。」',
+          '「讀書如磨刀，117 統測時刀刃畢現。」',
+          '「你現在的努力，117 統測都看得見。」',
+          '「117 統測，加油！你做得到！」',
+        ]
+      }
+    };
+
+    let lastQuote = '';
+    function updateQuote(mode, year) {
+      const pool = QUOTES[mode][year];
+      let q;
+      do { q = pool[Math.floor(Math.random() * pool.length)]; } while (q === lastQuote && pool.length > 1);
+      lastQuote = q;
+      document.getElementById('quoteEl').textContent = q;
+    }
+
+    const EXAMS = {
+      jhexam: {
+        116: {
+          target: new Date('2027-05-15T08:30:00+08:00'),
+          start: new Date('2026-05-15T08:00:00+08:00'),
+          title: '116 年國中教育會考倒數',
+          sub: 'TAIWAN · 116 / 5 / 15 · SATURDAY',
+          dateLabel: '民國 116 年 5 月 15 日（星期六）',
+          heroYear: '會考',
+          badge: '國中教育會考倒數',
+          hasSchedule: false
+        },
+        117: {
+          target: new Date('2028-05-20T08:30:00+08:00'),
+          start: new Date('2027-05-20T08:00:00+08:00'),
+          title: '117 年國中教育會考倒數',
+          sub: 'TAIWAN · 117 / 5 / 20 · SATURDAY',
+          dateLabel: '民國 117 年 5 月 20 日（星期六）',
+          heroYear: '會考',
+          badge: '國中教育會考倒數',
+          hasSchedule: false
+        }
+      },
+      sat: {
+        116: {
+          target: new Date('2027-01-16T08:30:00+08:00'),
+          start: new Date('2026-01-16T08:00:00+08:00'),
+          title: '116 年學科能力測驗倒數',
+          sub: 'TAIWAN · 116 / 1 / 16 ～ 1 / 18',
+          dateLabel: '民國 116 年 1 月 16 日 ～ 1 月 18 日',
+          heroYear: '學測',
+          badge: '學科能力測驗倒數',
+          hasSchedule: false
+        },
+        117: {
+          target: new Date('2028-01-15T08:30:00+08:00'),
+          start: new Date('2027-01-15T08:00:00+08:00'),
+          title: '117 年學科能力測驗倒數',
+          sub: 'TAIWAN · 117 / 1 / 15 ～ 1 / 17',
+          dateLabel: '民國 117 年 1 月 15 日 ～ 1 月 17 日',
+          heroYear: '學測',
+          badge: '學科能力測驗倒數',
+          hasSchedule: false
+        }
+      },
+      uni: {
+        116: {
+          target: new Date('2027-04-24T08:00:00+08:00'),
+          start: new Date('2026-04-24T08:00:00+08:00'),
+          title: '116 年統一入學測驗倒數',
+          sub: 'TAIWAN · 116 / 4 / 24 ～ 4 / 25',
+          dateLabel: '民國 116 年 4 月 24 日 ～ 4 月 25 日',
+          heroYear: '統測',
+          badge: '統一入學測驗倒數',
+          hasSchedule: false
+        },
+        117: {
+          target: new Date('2028-04-29T08:00:00+08:00'),
+          start: new Date('2027-04-29T08:00:00+08:00'),
+          title: '117 年統一入學測驗倒數',
+          sub: 'TAIWAN · 117 / 4 / 29 ～ 4 / 30',
+          dateLabel: '民國 117 年 4 月 29 日 ～ 4 月 30 日',
+          heroYear: '統測',
+          badge: '統一入學測驗倒數',
+          hasSchedule: false
+        }
+      }
+    };
+
+    // === 側邊選單 ===
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('open');
+      document.getElementById('sidebarOverlay').classList.add('show');
+    }
+
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebarOverlay').classList.remove('show');
+    }
+
+    let currentMode = 'jhexam';
+
+    function selectMode(mode, year) {
+      currentMode = mode;
+      // 更新側邊欄 active
+      document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+      document.getElementById(`sb-${mode}-${year}`).classList.add('active');
+
+      const ex = EXAMS[mode][year];
+
+      // 更新 hero
+      document.getElementById('hero-title').textContent = ex.title;
+      document.getElementById('hero-sub').textContent = ex.sub;
+      document.getElementById('date-label').textContent = ex.dateLabel;
+      document.querySelector('.hero-year').textContent = ex.heroYear;
+      document.querySelector('.badge').innerHTML = `<span class="badge-dot"></span>${ex.badge}`;
+
+      // 更新年份選擇器
+      document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.sel-btn').forEach(b => {
+        if (b.textContent.trim().startsWith(String(year))) b.classList.add('active');
+      });
+
+      // 更新年份按鈕功能
+      document.querySelectorAll('.sel-btn').forEach(b => {
+        const y = parseInt(b.textContent);
+        b.onclick = () => selectMode(mode, y);
+      });
+
+      // 科目計時器只在會考模式顯示
+      document.getElementById('subjectTimerWrap').style.display = mode === 'jhexam' ? '' : 'none';
+
+      // 課程表：只有會考才顯示，依年份切換
+      document.getElementById('schedule-116').style.display = 'none';
+      document.getElementById('schedule-117').style.display = 'none';
+      if (mode === 'jhexam') {
+        document.getElementById(`schedule-${year}`).style.display = '';
+      }
+
+      updateQuote(mode, year);
+
+      // 重設倒數
+      current = year;
+      prev = {};
+      countdownEnded = false;
+      stopFinishSound();
+
+      if (timer) clearInterval(timer);
+      tick();
+      timer = setInterval(tick, 1000);
+
+      closeSidebar();
+    }
+
+    updateQuote('jhexam', 116);
+    document.getElementById('schedule-116').style.display = '';
+
+    let current = 116;
+    let timer = null;
+    let prev = {};
+    let countdownEnded = false;
+
+    const els = {
+      days: document.getElementById('days'),
+      hours: document.getElementById('hours'),
+      minutes: document.getElementById('minutes'),
+      seconds: document.getElementById('seconds')
+    };
+
+    const finished = document.getElementById('finished');
+    const countdown = document.getElementById('countdown');
+
+    function pad(n) {
+      return String(n).padStart(2, '0');
+    }
+
+    function pop(el) {
+      el.classList.remove('pop');
+      void el.offsetWidth;
+      el.classList.add('pop');
+    }
+
+    function tick() {
+      const ex = EXAMS[currentMode][current];
+      const now = new Date();
+      const diff = ex.target - now;
+
+      const pct = Math.min(100, Math.max(0, (now - ex.start) / (ex.target - ex.start) * 100));
+      document.getElementById('prog-fill').style.width = pct.toFixed(2) + '%';
+      document.getElementById('prog-pct').textContent = pct.toFixed(1) + '%';
+
+      if (diff <= 0) {
+        countdown.style.display = 'none';
+        finished.style.display = 'block';
+
+        if (!countdownEnded) {
+          countdownEnded = true;
+          playFinishSound();
+        }
+        return;
+      }
+
+      countdown.style.display = 'grid';
+      finished.style.display = 'none';
+      countdownEnded = false;
+
+      const t = Math.floor(diff / 1000);
+      const d = Math.floor(t / 86400);
+
+      const vals = {
+        days: pad(d),
+        hours: pad(Math.floor(t / 3600) % 24),
+        minutes: pad(Math.floor(t / 60) % 60),
+        seconds: pad(t % 60)
+      };
+
+      for (const [k, v] of Object.entries(vals)) {
+        if (v !== prev[k]) {
+          els[k].textContent = v;
+          pop(els[k]);
+          prev[k] = v;
+        }
+      }
+
+      Object.values(els).forEach(el => el.classList.toggle('urgent', d <= 7));
+    }
+
+    function showPanel(id, btn, wrapId) {
+      const wrap = wrapId ? document.getElementById(wrapId) : document.querySelector('.schedule-wrap:not([style*="none"])');
+      if (wrap) {
+        wrap.querySelectorAll('.schedule-grid').forEach(g => g.classList.remove('show'));
+        wrap.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      }
+      const target = document.getElementById(id);
+      if (target) target.classList.add('show');
+      if (btn) btn.classList.add('active');
+    }
+
+    let dark = true;
+    function toggleTheme() {
+      dark = !dark;
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      document.getElementById('themeBtn').textContent = dark ? '🌙' : '☀️';
+    }
+
+    const bgm = document.getElementById('bgm');
+    const finishSfx = document.getElementById('finishSfx');
+    const musicBtn = document.getElementById('musicBtn');
+    const volWrap = document.getElementById('volWrap');
+
+    let playing = false;
+    let volTimer = null;
+    bgm.volume = 0.5;
+    finishSfx.volume = 1.0;
+
+    function stopFinishSound() {
+      finishSfx.pause();
+      finishSfx.currentTime = 0;
+    }
+
+    function playFinishSound() {
+      stopFinishSound();
+
+      // 先停背景音樂，避免兩個聲音重疊
+      if (playing) {
+        bgm.pause();
+        bgm.currentTime = 0;
+        musicBtn.classList.remove('playing');
+        playing = false;
+      }
+
+      finishSfx.currentTime = 0;
+      finishSfx.play().catch(() => {});
+    }
+
+    function toggleMusic() {
+      // 播背景音樂前，先避免結束音效和它同時播放
+      stopFinishSound();
+
+      if (playing) {
+        bgm.pause();
+        musicBtn.classList.remove('playing');
+        playing = false;
+      } else {
+        bgm.play().catch(() => {});
+        musicBtn.classList.add('playing');
+        playing = true;
+      }
+
+      volWrap.classList.add('show');
+      clearTimeout(volTimer);
+      volTimer = setTimeout(() => volWrap.classList.remove('show'), 3000);
+    }
+
+    function setVol(v) {
+      bgm.volume = v / 100;
+      clearTimeout(volTimer);
+      volTimer = setTimeout(() => volWrap.classList.remove('show'), 2000);
+    }
+
+    const SUBJECT_TIMES = {
+      social: 70 * 60,
+      math: 80 * 60,
+      chinese: 70 * 60,
+      writing: 50 * 60,
+      science: 70 * 60,
+      english_reading: 60 * 60,
+      english_listening: 25 * 60
+    };
+
+    const SUBJECT_LABELS = {
+      social: '社會',
+      math: '數學',
+      chinese: '國文',
+      writing: '寫作測驗',
+      science: '自然',
+      english_reading: '英語（閱讀）',
+      english_listening: '英語（聽力）'
+    };
+
+    const subjectSelect = document.getElementById('subjectSelect');
+    const subjectTimerDisplay = document.getElementById('subjectTimerDisplay');
+    const subjectTimerSubtext = document.getElementById('subjectTimerSubtext');
+
+    let subjectTimerTotal = SUBJECT_TIMES[subjectSelect.value];
+    let subjectTimerRemaining = subjectTimerTotal;
+    let subjectTimerInterval = null;
+    let subjectTimerRunning = false;
+
+    function formatTimer(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function updateSubjectTimerUI() {
+      subjectTimerDisplay.textContent = formatTimer(subjectTimerRemaining);
+      const key = subjectSelect.value;
+      subjectTimerSubtext.textContent = `${SUBJECT_LABELS[key]}｜${subjectTimerRunning ? '進行中' : '待機中'}`;
+    }
+
+    function resetSubjectTimer() {
+      stopSubjectTimer(false);
+      const key = subjectSelect.value;
+      subjectTimerTotal = SUBJECT_TIMES[key];
+      subjectTimerRemaining = subjectTimerTotal;
+      updateSubjectTimerUI();
+    }
+
+    function startSubjectTimer() {
+      if (subjectTimerRunning) return;
+
+      if (subjectTimerRemaining <= 0) {
+        resetSubjectTimer();
+      }
+
+      subjectTimerRunning = true;
+      updateSubjectTimerUI();
+
+      subjectTimerInterval = setInterval(() => {
+        if (subjectTimerRemaining > 0) {
+          subjectTimerRemaining--;
+          updateSubjectTimerUI();
+        } else {
+          stopSubjectTimer(false);
+          subjectTimerSubtext.textContent = '時間到！';
+          clearInterval(subjectTimerInterval);
+          subjectTimerInterval = null;
+        }
+      }, 1000);
+    }
+
+    function pauseSubjectTimer() {
+      if (!subjectTimerRunning) return;
+      subjectTimerRunning = false;
+      if (subjectTimerInterval) {
+        clearInterval(subjectTimerInterval);
+        subjectTimerInterval = null;
+      }
+      updateSubjectTimerUI();
+    }
+
+    function stopSubjectTimer(resetValue = true) {
+      subjectTimerRunning = false;
+      if (subjectTimerInterval) {
+        clearInterval(subjectTimerInterval);
+        subjectTimerInterval = null;
+      }
+
+      if (resetValue) {
+        const key = subjectSelect.value;
+        subjectTimerTotal = SUBJECT_TIMES[key];
+        subjectTimerRemaining = subjectTimerTotal;
+      }
+
+      updateSubjectTimerUI();
+    }
+
+    subjectSelect.addEventListener('change', resetSubjectTimer);
+
+    tick();
+    timer = setInterval(tick, 1000);
+    resetSubjectTimer();
+  </script>
+</body>
+</html>
